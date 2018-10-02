@@ -48,7 +48,7 @@ def scan_udp(port):
 	result = os.system("nc -vnzu " + host + " " + str(port))
 	if result == 0:
 		counting_open.append(port)
-		
+
 def main():
 	parser = argparse.ArgumentParser(description='Process some integers.')
 	parser.add_argument('host', metavar='123.123.123.123', help='specifies the host to be scanned')
