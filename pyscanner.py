@@ -8,6 +8,7 @@ import argparse
 import socket
 import datetime
 import os
+import webbrowser
 
 host = ""
 portstring = ""
@@ -15,8 +16,10 @@ counting_open = []
 threads = []
 
 def generate_html(ports, protocol):
+	if not os.path.exists("reports"):	
+		os.makedirs("reports")
 	filename = host + "-report.html"
-	f = open(filename, "w")
+	f = open(os.path.join("reports",filename), "w")
 	time = datetime.datetime.now()
 	doc, tag, text = Doc().tagtext()
 	with tag('html'):
@@ -32,6 +35,7 @@ def generate_html(ports, protocol):
 			with tag('h3'):
 				text("Open ports: " + str(ports))
 	f.write(doc.getvalue())
+	webbrowser.open('file://' + os.path.realpath("reports/" + filename))
 
 def scan_tcp(port):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

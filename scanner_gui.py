@@ -1,14 +1,12 @@
 from tkinter import *
 from tkinter.ttk import *
 import os 
-import webbrowser
 
 def clicked():
     command = "python3 pyscanner.py " + txt_ip.get() + " -p " + txt_port.get()
     if combo_proto.get() == "udp":
         command += " -u"
     os.system(command)
-    webbrowser.open('file://' + os.path.realpath("report.html"))
 
 window = Tk()
 window.title("Simple Python Port Scanner")
