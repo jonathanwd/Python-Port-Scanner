@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# Code that helped me: https://gist.github.com/TheZ3ro/7255052
 
 from threading import Thread
 from multiprocessing.dummy import Pool as ThreadPool 
@@ -9,6 +8,7 @@ import socket
 import datetime
 import os
 import webbrowser
+from netaddr import IPNetwork
 
 host = ""
 portstring = ""
@@ -57,6 +57,9 @@ def generate_hosts(host_arg):
 	if "txt" in host_arg:
 		f = open(host_arg, "r")
 		hosts = f.read().split('\n')
+	elif("/" in host_arg):
+		for ip in IPNetwork(host_arg):
+			hosts.append(str(ip))
 	else:
 		hosts.append(host_arg)
 	return hosts
@@ -83,14 +86,17 @@ def main():
 		scan = scan_udp
 
 	for h in hosts:
-		global host
-		host = h
-		pool = ThreadPool(100)
-		pool.map(scan, range(from_port, to_port+1))
-		counting_open.sort()
-		print("Open ports: " + str(counting_open))
-		generate_html(counting_open, protocol)
-		counting_open.clear()
+		print(h)
+		HOST_UP  = True if os.system("ping -c 1 " + h) is 0 else False
+		if HOST_UP:
+			global host
+			host = h
+			pool = ThreadPool(100)
+			pool.map(scan, range(from_port, to_port+1))
+			counting_open.sort()
+			print("Open ports: " + str(counting_open))
+			generate_html(counting_open, protocol)
+			counting_open.clear()
 
 main()
 
@@ -100,3 +106,4 @@ main()
 # 10- UDP? Questionable since I'm just using netcat
 # 10- GUI
 # 5-  Text file of host IP’s
+# Other- I ping hosts to make sure I can connect to them.
