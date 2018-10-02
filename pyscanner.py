@@ -12,11 +12,11 @@ import os
 host = ""
 portstring = ""
 counting_open = []
-counting_close = []
 threads = []
 
 def generate_html(ports, protocol):
-	f = open("report.html", "w")
+	filename = host + "-report.html"
+	f = open(filename, "w")
 	time = datetime.datetime.now()
 	doc, tag, text = Doc().tagtext()
 	with tag('html'):
@@ -41,7 +41,6 @@ def scan_tcp(port):
 		print("Connection to " + host + " " + str(port) + " port [tcp/*] succeeded!")
 		s.close()
 	else:
-		counting_close.append(port)
 		s.close()
 
 def scan_udp(port):
@@ -49,15 +48,24 @@ def scan_udp(port):
 	if result == 0:
 		counting_open.append(port)
 
+def generate_hosts(host_arg):
+	hosts = []
+	if "txt" in host_arg:
+		f = open(host_arg, "r")
+		hosts = f.read().split('\n')
+	else:
+		hosts.append(host_arg)
+	return hosts
+
 def main():
 	parser = argparse.ArgumentParser(description='Process some integers.')
-	parser.add_argument('host', metavar='123.123.123.123', help='specifies the host to be scanned')
+	parser.add_argument('host', metavar='123.123.123.123 or filename.txt', help='specifies the host to be scanned, or the file to read host ips from')
 	parser.add_argument('-p', '--ports', metavar='1-1023', default=80, help='specifies the host ports to be scanned')
 	parser.add_argument('-u', '--udp', action='store_true', help='performs udp scan instead of tcp scan')
 	args = parser.parse_args()
 	
-	global host
-	host = args.host
+	hosts = generate_hosts(args.host)
+
 	scan = scan_tcp
 	protocol = "TCP"
 	if args.ports:
@@ -70,12 +78,15 @@ def main():
 		protocol = "UDP"
 		scan = scan_udp
 
-	pool = ThreadPool(100)
-	pool.map(scan, range(from_port, to_port+1))
-	counting_open.sort()
-
-	print("Open ports: " + str(counting_open))
-	generate_html(counting_open, protocol)
+	for h in hosts:
+		global host
+		host = h
+		pool = ThreadPool(100)
+		pool.map(scan, range(from_port, to_port+1))
+		counting_open.sort()
+		print("Open ports: " + str(counting_open))
+		generate_html(counting_open, protocol)
+		counting_open.clear()
 
 main()
 
@@ -84,3 +95,4 @@ main()
 # 10- HTML report
 # 10- UDP? Questionable since I'm just using netcat
 # 10- GUI
+# 5-  Text file of host IP’s
