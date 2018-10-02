@@ -15,14 +15,14 @@ counting_open = []
 counting_close = []
 threads = []
 
-def generate_html(ports):
+def generate_html(ports, protocol):
 	f = open("report.html", "w")
 	time = datetime.datetime.now()
 	doc, tag, text = Doc().tagtext()
 	with tag('html'):
 		with tag('body'):
 			with tag('h1'):
-				text('Port Scan Report')
+				text(protocol + ' Port Scan Report')
 			with tag('p'):
 				text("Report generated " + str(time))
 			with tag('h3'):
@@ -59,6 +59,7 @@ def main():
 	global host
 	host = args.host
 	scan = scan_tcp
+	protocol = "TCP"
 	if args.ports:
 		global portstring
 		portstring = args.ports
@@ -66,6 +67,7 @@ def main():
 		from_port = int(ports[0])
 		to_port = int(ports[-1])
 	if args.udp:
+		protocol = "UDP"
 		scan = scan_udp
 
 	pool = ThreadPool(100)
@@ -73,10 +75,12 @@ def main():
 	counting_open.sort()
 
 	print("Open ports: " + str(counting_open))
-	generate_html(counting_open)
+	generate_html(counting_open, protocol)
 
 main()
 
 # 40- Command line switches allowing specification of host and port. Also presents simple response to user
 # 10- Allow multiple ports to be specified. 
 # 10- HTML report
+# 10- UDP? Questionable since I'm just using netcat
+# 10- GUI
