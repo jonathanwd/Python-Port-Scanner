@@ -3,12 +3,13 @@
 from threading import Thread
 from multiprocessing.dummy import Pool as ThreadPool 
 from yattag import Doc
+from netaddr import IPNetwork
+from scapy.all import *
 import argparse
 import socket
 import datetime
 import os
 import webbrowser
-from netaddr import IPNetwork
 
 host = ""
 portstring = ""
@@ -55,6 +56,11 @@ def scan_udp(port):
 	if result == 0:
 		counting_open.append(port)
 
+# Performs traceroute on an IP address
+def traceroute(port):
+	result, unans = scapy.all.traceroute(host,maxttl=32)
+	print(result)
+
 # Turns the host argument into a list of hosts to scan
 def generate_hosts(host_arg):
 	hosts = []
@@ -73,16 +79,18 @@ def main():
 	parser.add_argument('host', metavar='123.123.123.123 or filename.txt', help='specifies the host to be scanned, or the file to read host ips from')
 	parser.add_argument('-p', '--ports', metavar='1-1023', default=80, help='specifies the host ports to be scanned')
 	parser.add_argument('-u', '--udp', action='store_true', help='performs udp scan instead of tcp scan')
+	parser.add_argument('-t', '--traceroute', action='store_true', help='performs traceroute on specified ports')
 	args = parser.parse_args()
 	
 	hosts = generate_hosts(args.host)		# Generate list of IPs to scan
 
 	scan = scan_tcp
 	protocol = "TCP"
+	print(args)
 	if args.ports:
 		global portstring
-		portstring = args.ports
-		ports = args.ports.split('-')
+		portstring = str(args.ports)
+		ports = portstring.split('-')
 		from_port = int(ports[0])
 		to_port = int(ports[-1])
 	if args.udp:
@@ -96,10 +104,13 @@ def main():
 			global host
 			host = h
 			pool = ThreadPool(100)							# Create 100 threads for scanning
-			pool.map(scan, range(from_port, to_port+1))	
-			counting_open.sort()
-			print("Open ports: " + str(counting_open))
-			generate_html(counting_open, protocol)
-			counting_open.clear()
-
+			if args.traceroute:
+				scan = traceroute
+				pool.map(scan, range(from_port, to_port+1))	
+			else:
+				pool.map(scan, range(from_port, to_port+1))	
+				counting_open.sort()
+				print("Open ports: " + str(counting_open))
+				generate_html(counting_open, protocol)
+				counting_open.clear()
 main()

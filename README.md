@@ -24,7 +24,10 @@ Use the ```-p``` option to specify ports. ```<ports>``` may be
 2. A range of ports separated by a hyphen (eg. 1-1000)
 
 If the ```-p``` option is not used, the scanner scans port 80 by default.
+
 TCP ports are scanned by default. Use the ```-u``` option to scan UDP ports. 
+
+Use the ```-t``` option to perform a traceroute on the specified hosts.
 
 The scanner may also be run from a simple GUI by running 
 ```
