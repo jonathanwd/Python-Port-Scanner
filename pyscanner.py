@@ -15,9 +15,10 @@ portstring = ""
 counting_open = []
 threads = []
 
+# Create an HTML report is created for every valid IP address scanned.
 def generate_html(ports, protocol):
 	if not os.path.exists("reports"):	
-		os.makedirs("reports")
+		os.makedirs("reports") 												# Create the 'reports' subdirectory if it does not exist
 	filename = host + "-report.html"
 	f = open(os.path.join("reports",filename), "w")
 	time = datetime.datetime.now()
@@ -35,8 +36,9 @@ def generate_html(ports, protocol):
 			with tag('h3'):
 				text("Open ports: " + str(ports))
 	f.write(doc.getvalue())
-	webbrowser.open('file://' + os.path.realpath("reports/" + filename))
+	webbrowser.open('file://' + os.path.realpath("reports/" + filename))	# This line opens the HTML report in the user's default browser
 
+# Scans a single TCP port
 def scan_tcp(port):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	result = s.connect_ex((host,port))
@@ -47,21 +49,23 @@ def scan_tcp(port):
 	else:
 		s.close()
 
+# Scans a single UDP port
 def scan_udp(port):
 	result = os.system("nc -vnzu " + host + " " + str(port))
 	if result == 0:
 		counting_open.append(port)
 
+# Turns the host argument into a list of hosts to scan
 def generate_hosts(host_arg):
 	hosts = []
-	if "txt" in host_arg:
+	if "txt" in host_arg:					# Reads IP addresses to scan from a file
 		f = open(host_arg, "r")
 		hosts = f.read().split('\n')
-	elif("/" in host_arg):
+	elif("/" in host_arg):					# Changes subnet mask into a range of addresses to scan
 		for ip in IPNetwork(host_arg):
 			hosts.append(str(ip))
 	else:
-		hosts.append(host_arg)
+		hosts.append(host_arg)				# Assumes that the host argument is a single IP address to scan
 	return hosts
 
 def main():
@@ -71,7 +75,7 @@ def main():
 	parser.add_argument('-u', '--udp', action='store_true', help='performs udp scan instead of tcp scan')
 	args = parser.parse_args()
 	
-	hosts = generate_hosts(args.host)
+	hosts = generate_hosts(args.host)		# Generate list of IPs to scan
 
 	scan = scan_tcp
 	protocol = "TCP"
@@ -87,23 +91,15 @@ def main():
 
 	for h in hosts:
 		print(h)
-		HOST_UP  = True if os.system("ping -c 1 " + h) is 0 else False
+		HOST_UP  = True if os.system("ping -c 1 " + h) is 0 else False	# Check if host is reachable through ping
 		if HOST_UP:
 			global host
 			host = h
-			pool = ThreadPool(100)
-			pool.map(scan, range(from_port, to_port+1))
+			pool = ThreadPool(100)							# Create 100 threads for scanning
+			pool.map(scan, range(from_port, to_port+1))	
 			counting_open.sort()
 			print("Open ports: " + str(counting_open))
 			generate_html(counting_open, protocol)
 			counting_open.clear()
 
 main()
-
-# 40- Command line switches allowing specification of host and port. Also presents simple response to user
-# 10- Allow multiple ports to be specified. 
-# 10- HTML report
-# 10- UDP? Questionable since I'm just using netcat
-# 10- GUI
-# 5-  Text file of host IP’s
-# Other- I ping hosts to make sure I can connect to them.
